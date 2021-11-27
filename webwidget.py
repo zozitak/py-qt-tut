@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QDialog, QMainWindow
-from PyQt5.QtCore import QUrl, Qt, QSize, QRect, QEvent
+from PyQt5.QtCore import Qt, QUrl, QSize, QRect, QEvent
+from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
@@ -8,6 +8,13 @@ class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow,self).__init__(*args, **kwargs)
         self.minimized = False
+
+        self.resize(600, 500)
+        self.setWindowTitle('Wiki')
+        web = QWebEngineView(self)
+        web.load(QUrl('https://github.com/aerospaceresearch/visma/wiki'))
+        web.resize(600, 500)
+        web.show()
 
     def popupBrowser(self):
         w = QDialog(self)
@@ -33,8 +40,8 @@ def mainPyQt5():
 
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.popupBrowser()
-    window.popupBrowser2()
+    #window.popupBrowser()
+    #window.popupBrowser2()
     
     window.show()
     app.exec_()

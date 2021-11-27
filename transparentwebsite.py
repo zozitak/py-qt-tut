@@ -13,23 +13,26 @@ class MainWindow(QMainWindow):
         #self.setAttribute(Qt.WA_TranslucentBackground, True)
         #self.setAttribute(Qt.WA_NoSystemBackground,False)
         self.minimized = False
+        self.resize(600, 500)
+        self.setWindowTitle('Wiki')
         
         #p = self.palette()
         #p.setColor(self.backgroundRole(),Qt.transparent)
         #self.setPalette(p)
         #self.setAutoFillBackground(True)
 
-        self.browser = QWebEngineView()
-        self.settings = self.browser.settings()
+        browser = QWebEngineView(self)
+        settings = browser.settings()
         #self.browser.setAttribute(Qt.WA_TranslucentBackground)
         #self.browser.setBackgroundRole(QPalette.NoRole)
         #self.browser.page().setBackgroundColor(QColor(0, 0, 0, 0))
-        self.settings.setAttribute(self.settings.ShowScrollBars,False)
+        settings.setAttribute(settings.ShowScrollBars,False)
         #self.browser.setUrl(QUrl("wwww.google.com"))
-        self.browser.load(QUrl("wwww.google.com"))
-        self.setCentralWidget(self.browser)
+        browser.load(QUrl('https://github.com/aerospaceresearch/visma/wiki'))
+        browser.resize(600, 500)
+        self.setCentralWidget(browser)
         ##        self.installEventFilter(self)
-        self.browser.show()
+        browser.show()
         
     # def centerAndResize(self,ScreenNumber):
     #     desktop = qApp.desktop()
