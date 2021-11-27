@@ -24,7 +24,6 @@ class MainWindow(QMainWindow):
         self.browser.setBackgroundRole(QPalette.NoRole)
         self.browser.page().setBackgroundColor(QColor(0, 0, 0, 0))
         self.settings.setAttribute(self.settings.ShowScrollBars,False)
-        #self.browser.setUrl(QUrl("file:///C:/Users/Zozitak/Dev/pyQt5_WCS/try2.html"))
         self.browser.setUrl(QUrl("./try2.html"))
         self.setCentralWidget(self.browser)
         ##        self.installEventFilter(self)
@@ -60,7 +59,7 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.centerAndResize(int(1))
+    window.centerAndResize(1)
     
     window.show()
     app.exec_()
