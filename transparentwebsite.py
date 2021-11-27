@@ -33,8 +33,6 @@ class MainWindow(QMainWindow):
         availableSize = desktop.screenGeometry(ScreenNumber).size()
         width = availableSize.width()
         height = availableSize.height()
-        width *= 0.9
-        height *= 0.9
         newSize = QSize(width, height)
         self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,
                                             Qt.AlignCenter,
