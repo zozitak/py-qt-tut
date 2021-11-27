@@ -8,7 +8,7 @@ import sys
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super(MainWindow,self).__init__(*args, **kwargs)
-        self.setWindowFlags(Qt.WindowStaysOnBottomHint | Qt.FramelessWindowHint)
+        # self.setWindowFlags(Qt.WindowStaysOnBottomHint | Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WA_NoSystemBackground,False)
         self.minimized = False
@@ -28,16 +28,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.browser)
         ##        self.installEventFilter(self)
         
-    def centerAndResize(self,ScreenNumber):
-        desktop = qApp.desktop()
-        availableSize = desktop.screenGeometry(ScreenNumber).size()
-        width = availableSize.width()
-        height = availableSize.height()
-        newSize = QSize(width, height)
-        self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,
-                                            Qt.AlignCenter,
-                                            newSize,
-                                            desktop.screenGeometry(ScreenNumber)))
+    # def centerAndResize(self,ScreenNumber):
+    #     desktop = qApp.desktop()
+    #     availableSize = desktop.screenGeometry(ScreenNumber).size()
+    #     width = availableSize.width()
+    #     height = availableSize.height()
+    #     newSize = QSize(width, height)
+    #     self.setGeometry(QStyle.alignedRect(Qt.LeftToRight,
+    #                                         Qt.AlignCenter,
+    #                                         newSize,
+    #                                         desktop.screenGeometry(ScreenNumber)))
     ##############################################################
     ## Events
     ##############################################################
@@ -57,7 +57,6 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.centerAndResize(1)
     
     window.show()
     app.exec_()
