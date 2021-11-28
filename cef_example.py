@@ -21,7 +21,7 @@ import sys
 
 # GLOBALS
 PYQT4 = False
-PYQT5 = False
+PYQT5 = True
 PYSIDE = False
 PYSIDE2 = False
 
