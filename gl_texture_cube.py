@@ -1,120 +1,190 @@
-import glfw
-from OpenGL.GL import *
-import OpenGL.GL.shaders
-import numpy
+# -----------------------------------------------------------------------------
+# Python & OpenGL for Scientific Visualization
+# www.labri.fr/perso/nrougier/python+opengl
+# Copyright (c) 2017, Nicolas P. Rougier
+# Distributed under the 2-Clause BSD License.
+# -----------------------------------------------------------------------------
+import sys
+import ctypes
+import numpy as np
+import OpenGL.GL as gl
+import OpenGL.GLUT as glut
 from PIL import Image
 
+# vertex_code = """
+#     attribute vec2 position;
+#     attribute vec4 color;
+#     varying vec4 v_color;
+#     void main()
+#     {
+#     gl_Position = vec4(position, 0.0, 1.0);
+#     v_color= color;
+#     } 
+#     """
 
-def main():
+# fragment_code = """
+# varying vec4 v_color;
+# void main()
+# {
+#   gl_FragColor = color;
+# }
+#     """
 
-    # initialize glfw
-    if not glfw.init():
-        return
-    
-    #creating the window
-    window = glfw.create_window(800, 600, "My OpenGL window", None, None)
+vertex_code = '''
+layout(location = 0) in vec3 vertexPosition_modelspace;
+layout(location = 1) in vec2 vertexUV;
 
-    if not window:
-        glfw.terminate()
-        return
+out vec2 UV;
 
-    glfw.make_context_current(window)
-    #           positions        colors          texture coords
-    quad = [   -0.5, -0.5, 0.0,  1.0, 0.0, 0.0,  0.0, 0.0,
-                0.5, -0.5, 0.0,  0.0, 1.0, 0.0,  1.0, 0.0,
-                0.5,  0.5, 0.0,  0.0, 0.0, 1.0,  1.0, 1.0,
-               -0.5,  0.5, 0.0,  1.0, 1.0, 1.0,  0.0, 1.0]
+uniform mat4 MVP;
 
-    quad = numpy.array(quad, dtype = numpy.float32)
+void main(){
 
-    indices = [0, 1, 2,
-               2, 3, 0]
+    gl_Position =  MVP * vec4(vertexPosition_modelspace,1);
 
-    indices = numpy.array(indices, dtype= numpy.uint32)
+    UV = vertexUV;
+}
+'''
 
-    vertex_shader = """
-    #version 330
-    in layout(location = 0) vec3 position;
-    in layout(location = 1) vec3 color;
-    in layout(location = 2) vec2 inTexCoords;
+fragment_code = '''
 
-    out vec3 newColor;
-    out vec2 outTexCoords;
-    void main()
-    {
-        gl_Position = vec4(position, 1.0f);
-        newColor = color;
-        outTexCoords = inTexCoords;
-    }
-    """
+in vec2 UV;
 
-    fragment_shader = """
-    #version 330
-    in vec3 newColor;
-    in vec2 outTexCoords;
+out vec3 color;
 
-    out vec4 outColor;
-    uniform sampler2D samplerTex;
-    void main()
-    {
-        outColor = texture(samplerTex, outTexCoords);
-    }
-    """
-    shader = OpenGL.GL.shaders.compileProgram(OpenGL.GL.shaders.compileShader(vertex_shader, GL_VERTEX_SHADER),
-                                              OpenGL.GL.shaders.compileShader(fragment_shader, GL_FRAGMENT_SHADER))
+uniform sampler2D myTextureSampler;
 
-    VBO = glGenBuffers(1)
-    glBindBuffer(GL_ARRAY_BUFFER, VBO)
-    glBufferData(GL_ARRAY_BUFFER, 128, quad, GL_STATIC_DRAW)
+void main(){
 
-    EBO = glGenBuffers(1)
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO)
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24, indices, GL_STATIC_DRAW)
+    color = texture( myTextureSampler, UV ).rgb;
+}
 
-    #position = glGetAttribLocation(shader, "position")
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 32, ctypes.c_void_p(0))
-    glEnableVertexAttribArray(0)
+'''
 
-    #color = glGetAttribLocation(shader, "color")
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 32, ctypes.c_void_p(12))
-    glEnableVertexAttribArray(1)
+def display():
+    gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+    gl.glDrawArrays(gl.GL_TRIANGLE_STRIP, 0, 4)
+    glut.glutSwapBuffers()
 
-    #texCoords = glGetAttribLocation(shader, "inTexCoords")
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 32, ctypes.c_void_p(24))
-    glEnableVertexAttribArray(2)
+def reshape(width,height):
+    gl.glViewport(0, 0, width, height)
 
+def keyboard( key, x, y ):
+    if key == b'\x1b':
+        sys.exit( )
 
+# GLUT init
+# --------------------------------------
+glut.glutInit()
+glut.glutInitDisplayMode(glut.GLUT_DOUBLE | glut.GLUT_RGBA)
+glut.glutCreateWindow('Hello world!')
+glut.glutReshapeWindow(512,512)
+glut.glutReshapeFunc(reshape)
+glut.glutDisplayFunc(display)
+glut.glutKeyboardFunc(keyboard)
 
-    texture = glGenTextures(1)
-    glBindTexture(GL_TEXTURE_2D, texture)
-    #texture wrapping params
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    #texture filtering params
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+# Build data
+# --------------------------------------
+# data = np.zeros(4, [("position", np.float32, 2)])
+# data['position'] = [(-1,+1), (+1,+1), (-1,-1), (+1,-1)]
+data = np.zeros(4, [("position", np.float32, 2),
+                    ("color",    np.float32, 4)])
+data['position'] = (-1,+1), (+1,+1), (-1,-1), (+1,-1)
+data['color']    = (0,1,0,1), (1,1,0,1), (1,0,0,1), (0,0,1,1)
 
-    image = Image.open("resources/wood.jpg")
-    img_data = numpy.array(list(image.getdata()), numpy.uint8)
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
+# Build texture 
+# --------------------------------------
+def load_JGP(res):
+    img = Image.open(res)
+    img_data = np.array(list(img.getdata()), np.int8)
 
+    texture_id = 0
+    texture_id = gl.glGenTextures(1, texture_id)
+    gl.glBindTexture(gl.GL_TEXTURE_2D, texture_id)
+    gl.glTexImage2D(gl.GL_TEXTURE_2D, 0,gl.GL_RGB, img.size[0], img.size[1], 0, gl.GL_BGR, gl.GL_UNSIGNED_BYTE, img_data)
+    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, gl.GL_REPEAT)
+    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_T, gl.GL_REPEAT)
+    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_LINEAR)
+    gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_LINEAR_MIPMAP_LINEAR)
+    gl.glGenerateMipmap(gl.GL_TEXTURE_2D)
+    return texture_id
 
+textureID = 0    
+textureID = load_JGP("resources/wood.jpg")
 
+# Build & activate program
+# --------------------------------------
+# Request a program and shader slots from GPU
+program  = gl.glCreateProgram()
+vertex   = gl.glCreateShader(gl.GL_VERTEX_SHADER)
+fragment = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
 
-    glUseProgram(shader)
+# Set shaders source
+gl.glShaderSource(vertex, vertex_code)
+gl.glShaderSource(fragment, fragment_code)
 
-    glClearColor(0.2, 0.3, 0.2, 1.0)
+# Compile shaders
+gl.glCompileShader(vertex)
+if not gl.glGetShaderiv(vertex, gl.GL_COMPILE_STATUS):
+    error = gl.glGetShaderInfoLog(vertex).decode()
+    print(error)
+    raise RuntimeError("Shader compilation error")
+                
+gl.glCompileShader(fragment)
+gl.glCompileShader(fragment)
+if not gl.glGetShaderiv(fragment, gl.GL_COMPILE_STATUS):
+    error = gl.glGetShaderInfoLog(fragment).decode()
+    print(error)
+    raise RuntimeError("Shader compilation error")                
 
-    while not glfw.window_should_close(window):
-        glfw.poll_events()
+# Attach shader objects to the program
+gl.glAttachShader(program, vertex)
+gl.glAttachShader(program, fragment)
 
-        glClear(GL_COLOR_BUFFER_BIT)
+# Build program
+gl.glLinkProgram(program)
+if not gl.glGetProgramiv(program, gl.GL_LINK_STATUS):
+    print(gl.glGetProgramInfoLog(program))
+    raise RuntimeError('Linking error')
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
+# Get rid of shaders (no more needed)
+gl.glDetachShader(program, vertex)
+gl.glDetachShader(program, fragment)
 
-        glfw.swap_buffers(window)
+# Make program the default program
+gl.glUseProgram(program)
 
-    glfw.terminate()
+# Build buffer
+# --------------------------------------
 
-if __name__ == "__main__":
-    main()
+# Request a buffer slot from GPU
+buffer = gl.glGenBuffers(1)
+
+# Make this buffer the default one
+gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer)
+
+# Upload data
+gl.glBufferData(gl.GL_ARRAY_BUFFER, data.nbytes, data, gl.GL_DYNAMIC_DRAW)
+
+# Bind the position attribute
+# --------------------------------------
+stride = data.strides[0]
+offset = ctypes.c_void_p(0)
+loc = gl.glGetAttribLocation(program, "position")
+gl.glEnableVertexAttribArray(loc)
+gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer)
+gl.glVertexAttribPointer(loc, 2, gl.GL_FLOAT, False, stride, offset)
+
+# Upload the uniform color
+# --------------------------------------
+# loc = gl.glGetUniformLocation(program, "color")
+# gl.glUniform4f(loc, 0.0, 0.0, 1.0, 1.0)
+offset = ctypes.c_void_p(data.dtype["position"].itemsize)
+loc = gl.glGetAttribLocation(program, "color")
+gl.glEnableVertexAttribArray(loc)
+gl.glBindBuffer(gl.GL_ARRAY_BUFFER, buffer)
+gl.glVertexAttribPointer(loc, 4, gl.GL_FLOAT, False, stride, offset)
+
+# Enter the mainloop
+# --------------------------------------
+glut.glutMainLoop()
