@@ -1,34 +1,73 @@
-import glfw
+import sys
 from OpenGL.GL import *
+from OpenGL.GLU import *
 import OpenGL.GL.shaders
-import numpy as np
+from PyQt5 import QtGui
+from PyQt5.QtOpenGL import *
+from PyQt5 import QtCore, QtWidgets, QtOpenGL
 from PIL import Image
+import numpy as np
 
 
-def main():
-    if not glfw.init():
-        return
+class Ui_MainWindow(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(Ui_MainWindow, self).__init__()
+        self.widget = glWidget()
+        #self.button = QtWidgets.QPushButton('Test', self)
+        mainLayout = QtWidgets.QHBoxLayout()
+        mainLayout.addWidget(self.widget)
+        #mainLayout.addWidget(self.button)
+        self.setLayout(mainLayout)
 
-    window = glfw.create_window(720, 600, "Pyopengl Texturing Rectangle", None, None)
+class glWidget(QGLWidget):
+    texture_id = 0
 
-    if not window:
-        glfw.terminate()
-        return
+    def __init__(self, parent=None):
+        QGLWidget.__init__(self, parent)
+        self.setMinimumSize(640, 640)
 
-    glfw.make_context_current(window)
+    def initializeGL(self):
+        glViewport(0,0,640,640)
+
+    def paintGL(self):
+        draw_my_rect()
 
 
+
+def read_texture(filename):
+    #Texture Creation
+    texture_id = glGenTextures(1)
+    glBindTexture(GL_TEXTURE_2D, texture_id)
+    # Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    # Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+    try:
+        image = Image.open(filename)
+    except IOError as err:
+        print( '\n image not found \n msg: ', err , '\n' )
+        sys.exit(1)
+    #
+    img_data = np.array( image , np.uint8 )
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
+    glEnable(GL_TEXTURE_2D)
+    return texture_id
+
+def draw_my_rect():
+    
                    #positions        colors               texture coords
-    rectangle = [-0.5, -0.5, 0.0,   1.0, 0.0, 0.0,          0.0, 0.0,
-            0.5, -0.5, 0.0,         0.0, 1.0, 0.0,          1.0, 0.0,
-            0.5, 0.5, 0.0,          0.0, 0.0, 1.0,          1.0, 1.0,
-            -0.5, 0.5, 0.0,         1.0, 1.0, 1.0,           0.0, 1.0]
-
+    rectangle = [-0.9, -0.9, 0.0,   1.0, 0.0, 0.0,          0.0, 0.0,
+            0.9, -0.9, 0.0,         0.0, 1.0, 0.0,          1.0, 0.0,
+            0.9, 0.9, 0.0,          0.0, 0.0, 1.0,          1.0, 1.0,
+            -0.9, 0.9, 0.0,         1.0, 1.0, 1.0,           0.0, 1.0]
    
     # convert to 32bit float
 
     rectangle = np.array(rectangle, dtype=np.float32)
-
 
     indices = [0,1,2,
               2,3,0]
@@ -129,24 +168,19 @@ def main():
     img_data = np.array( image , np.uint8 )
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
 
-
     glUseProgram(shader)
 
     glClearColor(1.0, 0.0, 0.0, 1.0)
 
-    while not glfw.window_should_close(window):
-        glfw.poll_events()
+    glClear(GL_COLOR_BUFFER_BIT)
 
-        glClear(GL_COLOR_BUFFER_BIT)
+    # Draw Rectangle
 
-        # Draw Rectangle
+    glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT,  None)
 
-        glDrawElements(GL_TRIANGLES,6, GL_UNSIGNED_INT,  None)
-
-        glfw.swap_buffers(window)
-
-    glfw.terminate()
-
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':    
+    app = QtWidgets.QApplication(sys.argv)    
+    Form = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow(Form)    
+    ui.show()    
+    sys.exit(app.exec_())
